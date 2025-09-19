@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"            // ← stick to Postgres for this stack
+  url      = env("DATABASE_URL")
+}
+
+model ResearchTask {
+  id        String     @id @default(cuid())
+  topic     String
+  status    TaskStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  logs    LogEntry[]
+  result  Result?
+}
+
+model LogEntry {
+  id        String     @id @default(cuid())
+  taskId    String
+  ts        DateTime   @default(now())
+  level     LogLevel   @default(INFO)
+  message   String
+  meta      Json?
+
+  task      ResearchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, ts])
+}
+
+model Result {
+  id        String   @id @default(cuid())
+  taskId    String   @unique
+  keywords  Json     // string[]
+  articles  Article[]
+
+  task      ResearchTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  resultId    String
+  title       String
+  url         String
+  source      String
+  summary     String
+  publishedAt DateTime?
+  topic       String?
+  createdAt   DateTime  @default(now())   // ← add this
+
+  result      Result @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@index([resultId])
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
