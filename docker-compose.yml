@@ -1,49 +1,38 @@
 version: "3.9"
 services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+    command: sh -c "npx prisma migrate deploy && npm run start"
+
   db:
-    image: postgres:16-alpine
+    image: postgres:16
     environment:
-      POSTGRES_PASSWORD: postgres
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: aiagent
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
-      REDIS_URL: redis://redis:6379
-      PORT: 8080
-      CORS_ORIGIN: http://localhost:3000
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    ports:
-      - "8080:8080"
-    command: sh -c "node -e 'process.exit(0)'; npm run db:push && node dist/server.js"
-
   worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.worker
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
-      REDIS_URL: redis://redis:6379
+    build: .
+    env_file: .env
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - db
+      - redis
+    command: node dist/worker/index.js
+
+volumes:
+  pgdata:

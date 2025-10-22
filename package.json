@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
+    "worker": "ts-node -r tsconfig-paths/register src/worker/index.ts"
   },
   "dependencies": {
     "react": "19.1.0",
@@ -23,8 +25,8 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "@eslint/eslintrc": "^3",
-    "@prisma/client" : "^6.16.3",
-    "bullmq" : "^5.60.0",
-    "ioredis" : "^5.8.0"
+    "@prisma/client": "^6.16.3",
+    "bullmq": "^5.60.0",
+    "ioredis": "^5.8.0"
   }
 }
